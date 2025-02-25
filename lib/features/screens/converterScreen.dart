@@ -8,6 +8,7 @@ import '../widgets/amountInput.dart';
 import '../widgets/quickConvert.dart';
 import '../widgets/currency_chart.dart' as chart;
 import '../../core/theme/Theme.dart';
+import '../widgets/currencyPicker.dart';
 
 class ConverterScreen extends StatefulWidget {
   const ConverterScreen({Key? key}) : super(key: key);
@@ -146,28 +147,56 @@ class _ConverterScreenState extends State<ConverterScreen>
   }
 
   Widget _buildConverterCard() {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            AmountInput(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: AmountInput(
               controller: _amountController,
               onChanged: _updateAmount,
             ),
-            const SizedBox(height: 20),
-            Row(
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
               children: [
-                Expanded(child: _buildCurrencySelector(fromCurrency, true)),
-                const Icon(Icons.arrow_forward, color: AppTheme.primaryColor),
-                Expanded(child: _buildCurrencySelector(toCurrency, false)),
+                CurrencyPicker(
+                  selectedCurrency: fromCurrency,
+                  onSelect: (currency) {
+                    setState(() {
+                      fromCurrency = currency;
+                      _loadExchangeRates();
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Icon(Icons.swap_vert_circle_outlined, size: 32),
+                const SizedBox(height: 16),
+                CurrencyPicker(
+                  selectedCurrency: toCurrency,
+                  onSelect: (currency) {
+                    setState(() => toCurrency = currency);
+                  },
+                  isSource: false,
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

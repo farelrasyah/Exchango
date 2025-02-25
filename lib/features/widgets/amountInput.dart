@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/theme/Theme.dart';
 
 class AmountInput extends StatelessWidget {
   final TextEditingController controller;
@@ -13,24 +14,51 @@ class AmountInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      autofocus: true,
-      style: Theme.of(context).textTheme.headlineSmall,
-      decoration: InputDecoration(
-        labelText: 'Amount',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryColor.withOpacity(0.05),
+            AppTheme.secondaryColor.withOpacity(0.05),
+          ],
         ),
-        prefixIcon: const Icon(Icons.attach_money),
-        filled: true,
-        fillColor: Colors.white,
+        borderRadius: BorderRadius.circular(16),
       ),
-      onChanged: onChanged,
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 12),
+            child: Text(
+              'Amount',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppTheme.textSecondaryColor,
+                  ),
+            ),
+          ),
+          TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                  color: AppTheme.textPrimaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+            decoration: InputDecoration(
+              hintText: '0.00',
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              prefixIcon: Icon(
+                Icons.pending_outlined,
+                color: AppTheme.primaryColor.withOpacity(0.5),
+              ),
+            ),
+            onChanged: onChanged,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

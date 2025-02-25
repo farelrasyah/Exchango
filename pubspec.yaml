@@ -30,11 +30,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  fl_chart: ^0.70.2
+  fl_chart: ^0.63.0  # Downgrade ke versi yang stabil
   google_fonts: ^6.1.0
   http: ^1.1.0
   flutter_svg: ^2.0.9
   animate_do: ^3.3.0
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
@@ -44,7 +45,7 @@ dev_dependencies:
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
+# rules and activating additional ones.
   flutter_lints: ^4.0.0
 
 # For information on the generic Dart part of this file, see the
