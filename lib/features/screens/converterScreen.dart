@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../data/services/apiService.dart';
 import '../widgets/currencyCard.dart';
 import '../widgets/currencySelector.dart';
 import '../widgets/amountInput.dart';
 import '../widgets/quickConvert.dart';
+import '../widgets/currency_chart.dart' as chart;
+import '../../core/theme/Theme.dart';
 
 class ConverterScreen extends StatefulWidget {
   const ConverterScreen({Key? key}) : super(key: key);
@@ -13,7 +16,8 @@ class ConverterScreen extends StatefulWidget {
   State<ConverterScreen> createState() => _ConverterScreenState();
 }
 
-class _ConverterScreenState extends State<ConverterScreen> {
+class _ConverterScreenState extends State<ConverterScreen>
+    with SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   final TextEditingController _amountController =
       TextEditingController(text: '1');
@@ -22,10 +26,20 @@ class _ConverterScreenState extends State<ConverterScreen> {
   double amount = 1.0;
   Map<String, double> rates = {};
   List<String> favorites = ['USD', 'EUR', 'GBP', 'JPY'];
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _controller.forward();
     _loadExchangeRates();
     _amountController.addListener(() => _updateAmount(_amountController.text));
   }
@@ -65,84 +79,149 @@ class _ConverterScreenState extends State<ConverterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exchango'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () {/* Show history */},
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text('Exchango'),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                ),
+                child: Center(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 40),
+                        Text(
+                          '${amount.toStringAsFixed(2)} $fromCurrency',
+                          style: Theme.of(context)
+                              .textTheme
+                              .displayLarge
+                              ?.copyWith(
+                                color: Colors.white,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Quick Convert Section
-          QuickConvert(favorites: favorites),
-
-          // Main Converter
-          Card(
-            margin: const EdgeInsets.all(16),
+          SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  AmountInput(
-                    controller: _amountController,
-                    onChanged: _updateAmount,
-                  ),
+                  // Currency Converter Card
+                  _buildConverterCard(),
+
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CurrencySelector(
-                          selectedCurrency: fromCurrency,
-                          onChanged: (value) {
-                            setState(() => fromCurrency = value!);
-                            _loadExchangeRates();
-                          },
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.swap_horiz),
-                        onPressed: _swapCurrencies,
-                      ),
-                      Expanded(
-                        child: CurrencySelector(
-                          selectedCurrency: toCurrency,
-                          onChanged: (value) {
-                            setState(() => toCurrency = value!);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+
+                  // Exchange Rate Chart
+                  _buildExchangeRateChart(),
+
+                  const SizedBox(height: 16),
+
+                  // Quick Actions
+                  _buildQuickActions(),
                 ],
               ),
             ),
           ),
-
-          // Conversion Result
-          if (rates.isNotEmpty)
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Text(
-                      (amount * (rates[toCurrency] ?? 1)).toStringAsFixed(2),
-                      style: Theme.of(context).textTheme.displayLarge,
-                    ),
-                    Text(
-                      toCurrency,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _swapCurrencies,
+        child: const Icon(Icons.swap_horiz),
+        backgroundColor: AppTheme.primaryColor,
+      ),
+    );
+  }
+
+  Widget _buildConverterCard() {
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            AmountInput(
+              controller: _amountController,
+              onChanged: _updateAmount,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(child: _buildCurrencySelector(fromCurrency, true)),
+                const Icon(Icons.arrow_forward, color: AppTheme.primaryColor),
+                Expanded(child: _buildCurrencySelector(toCurrency, false)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExchangeRateChart() {
+    // Create some dummy data points for demonstration
+    final List<FlSpot> dummySpots = [
+      const FlSpot(0, 0),
+      const FlSpot(1, 1.2),
+      const FlSpot(2, 1.8),
+      const FlSpot(3, 1.5),
+      const FlSpot(4, 2.0),
+      const FlSpot(5, 1.9),
+      const FlSpot(6, 2.2),
+    ];
+
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: chart.CurrencyChart(
+          spots: dummySpots,
+          currencyPair: '$fromCurrency/$toCurrency',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrencySelector(String currency, bool isFrom) {
+    return CurrencySelector(
+      selectedCurrency: currency,
+      onChanged: (String? newCurrency) {
+        if (newCurrency != null) {
+          setState(() {
+            if (isFrom) {
+              fromCurrency = newCurrency;
+              _loadExchangeRates();
+            } else {
+              toCurrency = newCurrency;
+            }
+          });
+        }
+      },
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return QuickConvert(
+      fromCurrency: fromCurrency,
+      toCurrency: toCurrency,
+      rates: rates,
+      amount: amount,
+      favorites: favorites,
     );
   }
 }
