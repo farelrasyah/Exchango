@@ -6,9 +6,10 @@ import '../widgets/currencyCard.dart';
 import '../widgets/currencySelector.dart';
 import '../widgets/amountInput.dart';
 import '../widgets/quickConvert.dart';
-import '../widgets/currency_chart.dart' as chart;
+import '../widgets/currencyChart.dart' as chart;
 import '../../core/theme/Theme.dart';
 import '../widgets/currencyPicker.dart';
+import '../widgets/currencyConverterPanel.dart';
 
 class ConverterScreen extends StatefulWidget {
   const ConverterScreen({Key? key}) : super(key: key);
@@ -147,57 +148,26 @@ class _ConverterScreenState extends State<ConverterScreen>
   }
 
   Widget _buildConverterCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: AmountInput(
-              controller: _amountController,
-              onChanged: _updateAmount,
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                CurrencyPicker(
-                  selectedCurrency: fromCurrency,
-                  onSelect: (currency) {
-                    setState(() {
-                      fromCurrency = currency;
-                      _loadExchangeRates();
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                const Icon(Icons.swap_vert_circle_outlined, size: 32),
-                const SizedBox(height: 16),
-                CurrencyPicker(
-                  selectedCurrency: toCurrency,
-                  onSelect: (currency) {
-                    setState(() => toCurrency = currency);
-                  },
-                  isSource: false,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    final conversionRate = rates[toCurrency] ?? 0.0;
+
+    return CurrencyConverterPanel(
+      fromCurrency: fromCurrency,
+      toCurrency: toCurrency,
+      amount: amount,
+      conversionRate: conversionRate,
+      onSwap: _swapCurrencies,
+      onAmountChanged: _updateAmount,
+      onFromCurrencyChanged: (currency) {
+        setState(() {
+          fromCurrency = currency;
+          _loadExchangeRates();
+        });
+      },
+      onToCurrencyChanged: (currency) {
+        setState(() {
+          toCurrency = currency;
+        });
+      },
     );
   }
 
