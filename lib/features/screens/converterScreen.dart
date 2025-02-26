@@ -84,35 +84,127 @@ class _ConverterScreenState extends State<ConverterScreen>
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 200.0,
+            expandedHeight: 250.0,
             floating: false,
             pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text('Exchango'),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                ),
-                child: Center(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 40),
-                        Text(
-                          '${amount.toStringAsFixed(2)} $fromCurrency',
-                          style: Theme.of(context)
-                              .textTheme
-                              .displayLarge
-                              ?.copyWith(
-                                color: Colors.white,
-                              ),
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TweenAnimationBuilder(
+                    duration: const Duration(seconds: 1),
+                    tween: Tween<double>(begin: 0, end: 1),
+                    builder: (context, double value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Icon(
+                          Icons.currency_exchange,
+                          color: Colors.white.withOpacity(value),
+                          size: 24,
                         ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [
+                        Colors.white,
+                        Colors.white.withOpacity(0.9),
                       ],
+                    ).createShader(bounds),
+                    child: const Text('Exchango'),
+                  ),
+                ],
+              ),
+              background: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppTheme.primaryColor,
+                          AppTheme.primaryColor.withOpacity(0.8),
+                          AppTheme.secondaryColor.withOpacity(0.6),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                  // Animated Background Patterns
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: BackgroundPatternPainter(
+                        color: Colors.white.withOpacity(0.05),
+                      ),
+                    ),
+                  ),
+                  // Main Content
+                  Center(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 40),
+                          // Animated Amount Display
+                          TweenAnimationBuilder<double>(
+                            duration: const Duration(milliseconds: 500),
+                            tween: Tween(begin: 0.0, end: amount),
+                            builder: (context, value, child) {
+                              return Column(
+                                children: [
+                                  Text(
+                                    CurrencyFormatter.format(
+                                        value, fromCurrency),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displayLarge
+                                        ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          offset: const Offset(0, 4),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 300),
+                                    child: Text(
+                                      '≈ ${CurrencyFormatter.format(value * (rates[toCurrency] ?? 0), toCurrency)}',
+                                      key: ValueKey(toCurrency),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                        color: Colors.white.withOpacity(0.8),
+                                        shadows: [
+                                          Shadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            offset: const Offset(0, 2),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -222,5 +314,39 @@ class _ConverterScreenState extends State<ConverterScreen>
       amount: amount,
       favorites: favorites,
     );
+  }
+}
+
+class BackgroundPatternPainter extends CustomPainter {
+  final Color color;
+
+  BackgroundPatternPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    const spacing = 20.0;
+    var x = 0.0;
+    while (x < size.width) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + spacing, size.height),
+        paint,
+      );
+      x += spacing * 2;
+    }
+  }
+
+  @override
+  bool shouldRepaint(BackgroundPatternPainter oldDelegate) => false;
+}
+
+class CurrencyFormatter {
+  static String format(double amount, String currencyCode) {
+    return '${currencyCode} ${amount.toStringAsFixed(2)}';
   }
 }
