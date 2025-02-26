@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:math' as math;
+import 'dart:math';
 import '../../data/services/apiService.dart';
 import '../widgets/currencyCard.dart';
 import '../widgets/currencySelector.dart';
@@ -11,6 +12,8 @@ import '../widgets/currencyChart.dart' as chart;
 import '../../core/theme/Theme.dart';
 import '../widgets/currencyPicker.dart';
 import '../widgets/currencyConverterPanel.dart';
+import 'dart:math';
+import 'package:google_fonts/google_fonts.dart';
 
 class ConverterScreen extends StatefulWidget {
   const ConverterScreen({Key? key}) : super(key: key);
@@ -31,6 +34,8 @@ class _ConverterScreenState extends State<ConverterScreen>
   List<String> favorites = ['USD', 'EUR', 'GBP', 'JPY'];
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+  final List<AnimatedIconData> _floatingIcons = [];
+  final Random _random = Random();
 
   @override
   void initState() {
@@ -45,6 +50,54 @@ class _ConverterScreenState extends State<ConverterScreen>
     _controller.forward();
     _loadExchangeRates();
     _amountController.addListener(() => _updateAmount(_amountController.text));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Move initialization here since it needs MediaQuery
+    if (_floatingIcons.isEmpty) {
+      _initializeFloatingIcons();
+    }
+  }
+
+  void _initializeFloatingIcons() {
+    final size = MediaQuery.of(context).size;
+    for (int i = 0; i < 8; i++) {
+      _floatingIcons.add(
+        AnimatedIconData(
+          icon: _getRandomIcon(),
+          position: Offset(
+            _random.nextDouble() * (size.width - 40),
+            _random.nextDouble() * 200,
+          ),
+          velocity: Offset(
+            (_random.nextDouble() - 0.5) * 2,
+            (_random.nextDouble() - 0.5) * 2,
+          ),
+          rotation: _random.nextDouble() * 2 * pi,
+          rotationSpeed: (_random.nextDouble() - 0.5) * 0.1,
+        ),
+      );
+    }
+  }
+
+  IconData _getRandomIcon() {
+    final icons = [
+      Icons.currency_exchange,
+      Icons.attach_money,
+      Icons.euro,
+      Icons.currency_pound,
+      Icons.currency_yen,
+      Icons.currency_rupee,
+      Icons.currency_bitcoin,
+      Icons.savings,
+      Icons.account_balance,
+      Icons.credit_card,
+      Icons.payment,
+      Icons.monetization_on,
+    ];
+    return icons[_random.nextInt(icons.length)];
   }
 
   void _updateAmount(String value) {
@@ -64,9 +117,17 @@ class _ConverterScreenState extends State<ConverterScreen>
   }
 
   void _showErrorSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Failed to load exchange rates')),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load exchange rates'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
   }
 
   void _swapCurrencies() {
@@ -91,62 +152,7 @@ class _ConverterScreenState extends State<ConverterScreen>
             backgroundColor: Colors.transparent,
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Animated Exchange Icon
-                  TweenAnimationBuilder(
-                    duration: const Duration(seconds: 1),
-                    tween: Tween<double>(begin: 0, end: 1),
-                    builder: (context, double value, child) {
-                      return Transform.rotate(
-                        angle: value * 2 * math.pi,
-                        child: Icon(
-                          Icons.currency_exchange,
-                          color: Colors.white.withOpacity(value),
-                          size: 28,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  // Animated Title
-                  ShaderMask(
-                    shaderCallback: (bounds) => LinearGradient(
-                      colors: [
-                        Colors.white,
-                        Colors.white.withOpacity(0.9),
-                        AppTheme.accentColor,
-                      ],
-                      stops: const [0.0, 0.5, 1.0],
-                    ).createShader(bounds),
-                    child: TweenAnimationBuilder(
-                      duration: const Duration(milliseconds: 1200),
-                      tween: Tween<double>(begin: 0, end: 1),
-                      builder: (context, double value, child) {
-                        return Transform.scale(
-                          scale: value,
-                          child: Text(
-                            'Exchango',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  offset: const Offset(0, 2),
-                                  blurRadius: 4,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              title: _buildAnimatedTitle(),
               background: Stack(
                 children: [
                   // Gradient Background
@@ -173,33 +179,7 @@ class _ConverterScreenState extends State<ConverterScreen>
                     ),
                   ),
                   // Floating Currency Icons
-                  ...List.generate(6, (index) {
-                    return Positioned(
-                      left: (index * 60.0) % MediaQuery.of(context).size.width,
-                      top: (index * 40.0) % 200,
-                      child: AnimatedBuilder(
-                        animation: _controller,
-                        builder: (context, child) {
-                          return Transform.translate(
-                            offset: Offset(
-                              0,
-                              20 *
-                                  math.sin(
-                                      _controller.value * 2 * math.pi + index),
-                            ),
-                            child: Opacity(
-                              opacity: 0.2,
-                              child: Icon(
-                                _getCurrencyIcon(index),
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  }),
+                  _buildFloatingIcons(),
                   // Main Content with Amount Display
                   Center(
                     child: FadeTransition(
@@ -399,6 +379,96 @@ class _ConverterScreenState extends State<ConverterScreen>
       },
     );
   }
+
+  Widget _buildFloatingIcons() {
+    if (_floatingIcons.isEmpty) return const SizedBox.shrink();
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Stack(
+          children: _floatingIcons.map((iconData) {
+            // Update position
+            iconData.position += iconData.velocity;
+            iconData.rotation += iconData.rotationSpeed;
+
+            // Bounce off edges
+            final size = MediaQuery.of(context).size;
+            if (iconData.position.dx <= 0 ||
+                iconData.position.dx >= size.width - 40) {
+              iconData.velocity =
+                  Offset(-iconData.velocity.dx, iconData.velocity.dy);
+            }
+            if (iconData.position.dy <= 0 || iconData.position.dy >= 200) {
+              iconData.velocity =
+                  Offset(iconData.velocity.dx, -iconData.velocity.dy);
+            }
+
+            return Positioned(
+              left: iconData.position.dx,
+              top: iconData.position.dy,
+              child: Transform.rotate(
+                angle: iconData.rotation,
+                child: Icon(
+                  iconData.icon,
+                  color: Colors.white.withOpacity(0.3),
+                  size: 24,
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedTitle() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TweenAnimationBuilder(
+          duration: const Duration(seconds: 1),
+          tween: Tween<double>(begin: 0, end: 1),
+          builder: (context, double value, child) {
+            return Transform.rotate(
+              angle: value * 2 * pi,
+              child: Icon(
+                Icons.currency_exchange,
+                color: Colors.white.withOpacity(value),
+                size: 32,
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 12),
+        ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [
+              Colors.white,
+              AppTheme.accentColor.withOpacity(0.8),
+              Colors.white,
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ).createShader(bounds),
+          child: Text(
+            'Exchango',
+            style: GoogleFonts.poppins(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class BackgroundPatternPainter extends CustomPainter {
@@ -468,4 +538,20 @@ class CurrencyFormatter {
   static String format(double amount, String currencyCode) {
     return '${currencyCode} ${amount.toStringAsFixed(2)}';
   }
+}
+
+class AnimatedIconData {
+  IconData icon;
+  Offset position;
+  Offset velocity;
+  double rotation;
+  double rotationSpeed;
+
+  AnimatedIconData({
+    required this.icon,
+    required this.position,
+    required this.velocity,
+    required this.rotation,
+    required this.rotationSpeed,
+  });
 }
