@@ -160,11 +160,7 @@ class _CurrencyButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                'assets/flags/${currency.toLowerCase()}.png',
-                width: 24,
-                height: 24,
-              ),
+            
               const SizedBox(width: 8),
               Text(
                 currency,
