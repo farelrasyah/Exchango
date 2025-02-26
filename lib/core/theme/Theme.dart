@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Modern vibrant color palette
-  static const primaryColor = Color(0xFF6C63FF); // Vibrant purple
-  static const secondaryColor = Color(0xFF32D74B); // Fresh green
-  static const accentColor = Color(0xFFFF9F43); // Warm orange
-  static const backgroundColor = Color(0xFFF7F9FF); // Soft blue-white
+  // Updated color palette with purple theme
+  static const primaryColor = Color(0xFF6C63FF); // Main purple
+  static const secondaryColor = Color(0xFF9D8CFF); // Light purple
+  static const accentColor = Color(0xFFB4ADFF); // Soft purple
+  static const backgroundColor = Color(0xFFF8F7FF); // Light purple background
+  static const deepPurple = Color(0xFF4A3CFF); // Deep purple for emphasis
+  static const textPrimaryColor = Color(0xFF2D2B52); // Dark purple text
+  static const textSecondaryColor = Color(0xFF6E6C94); // Muted purple text
   static const cardColor = Colors.white;
-  static const textPrimaryColor = Color(0xFF1E1F4B); // Deep navy
-  static const textSecondaryColor = Color(0xFF7B7F9E); // Muted purple
   static const gradientStart = Color(0xFF6C63FF);
   static const gradientEnd = Color(0xFF584FE0);
   static const successColor = Color(0xFF4CAF50); // Green for positive changes
