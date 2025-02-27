@@ -48,8 +48,8 @@ class _ConverterScreenState extends State<ConverterScreen>
   final List<AnimatedIconData> _floatingIcons = [];
   final Random _random = Random();
   final int numberOfIcons = 20; // More icons
-  final double maxSpeed = 0.5; // Reduced speed (was 3.0)
-  final double maxRotationSpeed = 0.02; // Reduced rotation speed (was 0.1)
+  final double maxSpeed = 1.2; // Increased from 0.5
+  final double maxRotationSpeed = 0.03; // Slightly increased from 0.02
 
   @override
   void initState() {
@@ -97,8 +97,8 @@ class _ConverterScreenState extends State<ConverterScreen>
 
   Offset _getRandomVelocity() {
     return Offset(
-      (_random.nextDouble() - 0.5) * maxSpeed,
-      (_random.nextDouble() - 0.5) * maxSpeed,
+      (_random.nextDouble() - 0.5) * maxSpeed * 1.5, // Multiply by 1.5 for extra speed
+      (_random.nextDouble() - 0.5) * maxSpeed * 1.5,
     );
   }
 
@@ -417,22 +417,22 @@ class _ConverterScreenState extends State<ConverterScreen>
         final size = MediaQuery.of(context).size;
 
         for (var iconData in _floatingIcons) {
-          // Update position with slower movement
+          // Update position with increased speed
           iconData.position += iconData.velocity;
           iconData.rotation += iconData.rotationSpeed;
 
-          // Smooth bouncing off edges
+          // Bounce with higher velocity retention
           if (iconData.position.dx <= 0 ||
               iconData.position.dx >= size.width - 40) {
             iconData.velocity = Offset(
-              -iconData.velocity.dx * 0.8, // Reduced bounce speed
+              -iconData.velocity.dx * 0.9, // Increased from 0.8 for more momentum
               iconData.velocity.dy,
             );
           }
           if (iconData.position.dy <= 0 || iconData.position.dy >= 280) {
             iconData.velocity = Offset(
               iconData.velocity.dx,
-              -iconData.velocity.dy * 0.8, // Reduced bounce speed
+              -iconData.velocity.dy * 0.9, // Increased from 0.8 for more momentum
             );
           }
 
