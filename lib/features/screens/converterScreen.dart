@@ -14,6 +14,17 @@ import '../widgets/currencyPicker.dart';
 import '../widgets/currencyConverterPanel.dart';
 import 'dart:math';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
+class CurrencyFormatter {
+  static String format(double value, String currencyCode) {
+    final formatter = NumberFormat.currency(
+      symbol: currencyCode,
+      decimalDigits: 2,
+    );
+    return formatter.format(value);
+  }
+}
 
 class ConverterScreen extends StatefulWidget {
   const ConverterScreen({Key? key}) : super(key: key);
@@ -36,18 +47,22 @@ class _ConverterScreenState extends State<ConverterScreen>
   late Animation<double> _fadeAnimation;
   final List<AnimatedIconData> _floatingIcons = [];
   final Random _random = Random();
+  final int numberOfIcons = 15; // Lebih banyak icon
+  final double maxSpeed = 3.0; // Kecepatan maksimal
+  final double maxRotationSpeed = 0.1; // Kecepatan rotasi maksimal
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 16), // 60 FPS
       vsync: this,
-    );
+    )..repeat(); // Make it continuous
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
-    _controller.forward();
+
     _loadExchangeRates();
     _amountController.addListener(() => _updateAmount(_amountController.text));
   }
@@ -63,23 +78,28 @@ class _ConverterScreenState extends State<ConverterScreen>
 
   void _initializeFloatingIcons() {
     final size = MediaQuery.of(context).size;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < numberOfIcons; i++) {
       _floatingIcons.add(
         AnimatedIconData(
           icon: _getRandomIcon(),
           position: Offset(
-            _random.nextDouble() * (size.width - 40),
-            _random.nextDouble() * 200,
+            _random.nextDouble() * size.width,
+            _random.nextDouble() * 280, // Sesuaikan dengan tinggi AppBar
           ),
-          velocity: Offset(
-            (_random.nextDouble() - 0.5) * 2,
-            (_random.nextDouble() - 0.5) * 2,
-          ),
+          velocity: _getRandomVelocity(),
           rotation: _random.nextDouble() * 2 * pi,
-          rotationSpeed: (_random.nextDouble() - 0.5) * 0.1,
+          rotationSpeed: (_random.nextDouble() - 0.5) * maxRotationSpeed,
+          size: _random.nextDouble() * 20 + 20, // Random size between 20-40
         ),
       );
     }
+  }
+
+  Offset _getRandomVelocity() {
+    return Offset(
+      (_random.nextDouble() - 0.5) * maxSpeed * 2,
+      (_random.nextDouble() - 0.5) * maxSpeed * 2,
+    );
   }
 
   IconData _getRandomIcon() {
@@ -96,6 +116,14 @@ class _ConverterScreenState extends State<ConverterScreen>
       Icons.credit_card,
       Icons.payment,
       Icons.monetization_on,
+      Icons.money_off,
+      Icons.account_balance_wallet,
+      Icons.price_change,
+      Icons.price_check,
+      Icons.currency_franc,
+      Icons.currency_lira,
+      Icons.currency_ruble,
+      Icons.local_atm,
     ];
     return icons[_random.nextInt(icons.length)];
   }
@@ -169,18 +197,11 @@ class _ConverterScreenState extends State<ConverterScreen>
                       ),
                     ),
                   ),
-                  // Animated Background Patterns
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: AnimatedBackgroundPainter(
-                        color: Colors.white.withOpacity(0.1),
-                        animation: _controller,
-                      ),
-                    ),
-                  ),
-                  // Floating Currency Icons
+                  // Animated Pattern Background
+                  _buildAnimatedPattern(),
+                  // Floating Icons dengan animasi yang lebih dinamis
                   _buildFloatingIcons(),
-                  // Main Content with Amount Display
+                  // Main Content
                   Center(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
@@ -188,22 +209,7 @@ class _ConverterScreenState extends State<ConverterScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 60),
-                          // Animated Amount Display with Shimmer Effect
-                          ShaderMask(
-                            shaderCallback: (bounds) => LinearGradient(
-                              colors: [
-                                Colors.white,
-                                Colors.white.withOpacity(0.9),
-                                Colors.white,
-                              ],
-                              stops: const [0.0, 0.5, 1.0],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              transform: GradientRotation(
-                                  _controller.value * 2 * math.pi),
-                            ).createShader(bounds),
-                            child: _buildAnimatedAmount(),
-                          ),
+                          _buildAnimatedAmount(),
                         ],
                       ),
                     ),
@@ -380,30 +386,55 @@ class _ConverterScreenState extends State<ConverterScreen>
     );
   }
 
-  Widget _buildFloatingIcons() {
-    if (_floatingIcons.isEmpty) return const SizedBox.shrink();
-
+  Widget _buildAnimatedPattern() {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
+        return CustomPaint(
+          painter: AnimatedBackgroundPainter(
+            color: Colors.white.withOpacity(0.1),
+            animation: _controller,
+          ),
+          child: Container(),
+        );
+      },
+    );
+  }
+
+  Widget _buildFloatingIcons() {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final size = MediaQuery.of(context).size;
+
+        for (var iconData in _floatingIcons) {
+          // Update position
+          iconData.position += iconData.velocity;
+          iconData.rotation += iconData.rotationSpeed;
+
+          // Bounce off edges with random velocity changes
+          if (iconData.position.dx <= 0 ||
+              iconData.position.dx >= size.width - 40) {
+            iconData.velocity = Offset(
+              -iconData.velocity.dx * (0.8 + _random.nextDouble() * 0.4),
+              iconData.velocity.dy * (0.9 + _random.nextDouble() * 0.2),
+            );
+          }
+          if (iconData.position.dy <= 0 || iconData.position.dy >= 280) {
+            iconData.velocity = Offset(
+              iconData.velocity.dx * (0.9 + _random.nextDouble() * 0.2),
+              -iconData.velocity.dy * (0.8 + _random.nextDouble() * 0.4),
+            );
+          }
+
+          // Random direction changes
+          if (_random.nextDouble() < 0.02) {
+            iconData.velocity = _getRandomVelocity();
+          }
+        }
+
         return Stack(
           children: _floatingIcons.map((iconData) {
-            // Update position
-            iconData.position += iconData.velocity;
-            iconData.rotation += iconData.rotationSpeed;
-
-            // Bounce off edges
-            final size = MediaQuery.of(context).size;
-            if (iconData.position.dx <= 0 ||
-                iconData.position.dx >= size.width - 40) {
-              iconData.velocity =
-                  Offset(-iconData.velocity.dx, iconData.velocity.dy);
-            }
-            if (iconData.position.dy <= 0 || iconData.position.dy >= 200) {
-              iconData.velocity =
-                  Offset(iconData.velocity.dx, -iconData.velocity.dy);
-            }
-
             return Positioned(
               left: iconData.position.dx,
               top: iconData.position.dy,
@@ -412,7 +443,7 @@ class _ConverterScreenState extends State<ConverterScreen>
                 child: Icon(
                   iconData.icon,
                   color: Colors.white.withOpacity(0.3),
-                  size: 24,
+                  size: iconData.size,
                 ),
               ),
             );
@@ -534,18 +565,13 @@ class AnimatedBackgroundPainter extends CustomPainter {
       color != oldDelegate.color;
 }
 
-class CurrencyFormatter {
-  static String format(double amount, String currencyCode) {
-    return '${currencyCode} ${amount.toStringAsFixed(2)}';
-  }
-}
-
 class AnimatedIconData {
   IconData icon;
   Offset position;
   Offset velocity;
   double rotation;
   double rotationSpeed;
+  double size; // Tambahkan properti size
 
   AnimatedIconData({
     required this.icon,
@@ -553,5 +579,7 @@ class AnimatedIconData {
     required this.velocity,
     required this.rotation,
     required this.rotationSpeed,
+    required this.size,
   });
 }
+
