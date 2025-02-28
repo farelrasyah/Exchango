@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/theme/Theme.dart';
 import 'features/screens/converterScreen.dart';
+import 'features/widgets/SplashScreen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +17,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Exchango',
       theme: AppTheme.lightTheme,
-      home: const ConverterScreen(),
+      home:
+          const SplashScreen(), // Changed from ConverterScreen to SplashScreen
+      routes: {
+        '/home': (context) => const ConverterScreen(),
+      },
     );
   }
 }
