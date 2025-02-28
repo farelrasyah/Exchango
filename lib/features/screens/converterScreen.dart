@@ -97,7 +97,9 @@ class _ConverterScreenState extends State<ConverterScreen>
 
   Offset _getRandomVelocity() {
     return Offset(
-      (_random.nextDouble() - 0.5) * maxSpeed * 1.5, // Multiply by 1.5 for extra speed
+      (_random.nextDouble() - 0.5) *
+          maxSpeed *
+          1.5, // Multiply by 1.5 for extra speed
       (_random.nextDouble() - 0.5) * maxSpeed * 1.5,
     );
   }
@@ -137,25 +139,56 @@ class _ConverterScreenState extends State<ConverterScreen>
 
   Future<void> _loadExchangeRates() async {
     try {
+      setState(() {
+        // Show loading state
+        rates = {};
+      });
+
       final result = await _apiService.getExchangeRates(fromCurrency);
-      setState(() => rates = result.conversionRates);
+
+      if (mounted) {
+        setState(() {
+          rates = result.conversionRates;
+        });
+      }
     } catch (e) {
-      _showErrorSnackbar();
+      if (mounted) {
+        _showErrorSnackbar(e.toString());
+        // Use default rates as fallback
+        setState(() {
+          rates = Map<String, double>.from({
+            'USD': 0.000064,
+            'EUR': 0.000059,
+            'GBP': 0.000051,
+            'JPY': 0.009657,
+            'IDR': 1.0,
+          });
+        });
+      }
     }
   }
 
-  void _showErrorSnackbar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load exchange rates'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    });
+  void _showErrorSnackbar(String error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(error),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Retry',
+          textColor: Colors.white,
+          onPressed: _loadExchangeRates,
+        ),
+      ),
+    );
   }
 
   void _swapCurrencies() {
@@ -425,14 +458,16 @@ class _ConverterScreenState extends State<ConverterScreen>
           if (iconData.position.dx <= 0 ||
               iconData.position.dx >= size.width - 40) {
             iconData.velocity = Offset(
-              -iconData.velocity.dx * 0.9, // Increased from 0.8 for more momentum
+              -iconData.velocity.dx *
+                  0.9, // Increased from 0.8 for more momentum
               iconData.velocity.dy,
             );
           }
           if (iconData.position.dy <= 0 || iconData.position.dy >= 280) {
             iconData.velocity = Offset(
               iconData.velocity.dx,
-              -iconData.velocity.dy * 0.9, // Increased from 0.8 for more momentum
+              -iconData.velocity.dy *
+                  0.9, // Increased from 0.8 for more momentum
             );
           }
 
