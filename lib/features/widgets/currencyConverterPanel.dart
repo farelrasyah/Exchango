@@ -110,7 +110,13 @@ class CurrencyConverterPanel extends StatelessWidget {
                     Expanded(
                       child: Text(
                         CurrencyFormatter.format(convertedAmount, toCurrency),
-                        style: Theme.of(context).textTheme.headlineMedium,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
                       ),
                     ),
                     _CurrencyButton(
@@ -127,8 +133,10 @@ class CurrencyConverterPanel extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              '1 $fromCurrency = ${CurrencyFormatter.format(conversionRate, toCurrency)}',
-              style: Theme.of(context).textTheme.bodyMedium,
+              '1 $fromCurrency = ${CurrencyFormatter.formatWithSeparators(conversionRate)} $toCurrency',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.textSecondaryColor,
+                  ),
             ),
           ),
         ],
@@ -160,7 +168,6 @@ class _CurrencyButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-            
               const SizedBox(width: 8),
               Text(
                 currency,
