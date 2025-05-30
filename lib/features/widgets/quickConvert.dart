@@ -33,7 +33,7 @@ class QuickConvert extends StatelessWidget {
                 Icon(Icons.flash_on, color: AppTheme.accentColor),
                 const SizedBox(width: 8),
                 Text(
-                  'Quick Convert',
+                    'Konversi Cepat',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ],

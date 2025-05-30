@@ -49,7 +49,7 @@ class CurrencyConverterPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'You Send',
+                    'Anda Kirim',
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
                 Row(
@@ -102,7 +102,7 @@ class CurrencyConverterPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'You Get',
+                    'Anda Terima',
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
                 Row(
